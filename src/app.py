@@ -1,5 +1,6 @@
 import os
 from flask import Flask, render_template, request, abort, url_for, session, jsonify
+from flask_session import Session
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from flask_socketio import SocketIO, join_room, leave_room, send, emit
 import uuid
@@ -73,9 +74,22 @@ def handle_join(data):
 def handle_message(data):
     room_id = data.get('room')
     message = data.get('message')
+    length = data.get('length')
+    username = session.get('username')
+
     if room_id in rooms:
-        rooms[room_id]['messages'].append(message)
-        send(message, to=room_id)
+        room = rooms[room_id]
+        room['messages'].append(message)
+        send(f'{username}: {message}', to=room_id)
+
+        # Update the user's score
+        if username not in room['scores']:
+            room['scores'][username] = 0
+        room['scores'][username] += length
+
+        # Check if the user has reached the score threshold
+        if room['scores'][username] >= 50:
+            emit('game_over', {'message': f'{username} has won the game!'}, to=room_id)
     else:
         emit('error', {'message': 'Room not found.'})
 

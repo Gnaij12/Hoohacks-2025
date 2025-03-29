@@ -13,26 +13,52 @@
                 socket.emit('join', {'username': username, 'room': room, 'token': token});
 
                 socket.on('message', function(msg) {
-                    var chat = document.getElementById('chat');
-                    var message = document.createElement('p');
-                    message.innerHTML = msg;
-                    chat.appendChild(message);
-                });
+                var chat = document.getElementById('chat');
+                var message = document.createElement('p');
+                message.innerHTML = msg;
+                chat.appendChild(message);
+            });
 
-                socket.on('error', function(data) {
-                    alert(data.message);
-                });
+            socket.on('game_over', function(data) {
+                var chat = document.getElementById('chat');
+                var message = document.createElement('p');
+                message.innerHTML = '<strong>' + data.message + '</strong>';
+                chat.appendChild(message);
+                document.getElementById('message').disabled = true;
+                document.getElementById('send_message').disabled = true;
+            });
 
-                document.getElementById('send_message').onclick = function() {
-                    var messageInput = document.getElementById('message');
-                    var message = messageInput.value;
-                    socket.emit('message', {'room': room, 'message': username + ': ' + message});
+            socket.on('error', function(data) {
+                alert(data.message);
+            });
+
+            document.getElementById('send_message').onclick = function() {
+                var messageInput = document.getElementById('message');
+                var message = messageInput.value;
+
+                // Send the message to the /calculate route
+                fetch('/calculate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({'input_string': message})
+                })
+                .then(response => response.json())
+                .then(data => {
+                    var length = data.length;
+                    // Emit the message and its length to the server
+                    socket.emit('message', {'room': room, 'message': message, 'length': length});
                     messageInput.value = '';
-                };
-
-                window.addEventListener('beforeunload', function() {
-                    socket.emit('leave', {'username': username, 'room': room});
+                })
+                .catch(error => {
+                    console.error('Error:', error);
                 });
+            };
+
+            window.addEventListener('beforeunload', function() {
+                socket.emit('leave', {'username': username, 'room': room});
+            });
             });
         </script>
     </head>
