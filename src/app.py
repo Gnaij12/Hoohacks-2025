@@ -10,7 +10,9 @@ from text_to_problems import text_to_problems
 import uuid
 import logging
 import json
+import spacy
 
+nlp = spacy.load("en_core_web_lg") 
 
 template_dir = os.path.abspath("./templates")
 app = Flask(__name__, template_folder="../templates/", static_folder="../static/")
@@ -60,46 +62,62 @@ def join_room_page(token):
 @app.route('/calculate', methods=['POST'])
 def calculate_length():
     print("Received calculate request")
-
-    # Check content type
     if not request.is_json:
         return jsonify({'error': 'Request must be JSON'}), 400
 
     data = request.get_json(silent=True)
-
     if not data:
         return jsonify({'error': 'Invalid JSON'}), 400
 
-    message = data.get('message', '')
+    message = data.get('message', '').strip()
     room_id = data.get('room_id')
     username = data.get('username')
-
-    print(f"message: {message}, room_id: {room_id}, username: {username}")
 
     if not room_id or not username:
         return jsonify({'error': 'room_id or username missing'}), 400
 
     room = rooms.get(room_id)
-    if not room:
-        return jsonify({'error': 'Room not found'}), 404
+    questions = room_questions.get(room_id, {})
 
-    # Make sure 'scores' exists
-    if 'scores' not in room:
-        room['scores'] = {}
+    if not room or not questions:
+        return jsonify({'error': 'Room or questions not found'}), 404
 
-    # Calculate length and update score
-    length = len(message)
-    room['scores'][username] = room['scores'].get(username, 0) + length
+    # Initialize score and progress if needed
+    room.setdefault('scores', {})
+    room.setdefault('progress', {})
+    room['scores'].setdefault(username, 0)
+    room['progress'].setdefault(username, 0)
 
-    print(room['scores'][username])
+    progress = room['progress'][username]
+    question_list = list(questions.keys())
 
-    # Check for winner
+    if progress >= len(question_list):
+        return jsonify({'message': 'You have completed all questions!'}), 200
+
+    # Score based on length
+    response_length = len(message)
+    room['scores'][username] += response_length
+
+    # Check for win (score threshold)
     if room['scores'][username] >= 50:
         socketio.emit('game_over', {'message': f'{username} has won the game!'}, room=room_id)
-        del rooms[room_id]  # Optionally clear room
+        del rooms[room_id]  # optional: clean up room
         return jsonify({'message': f'{username} has won the game!'}), 200
 
-    return jsonify({'length': length, 'new_score': room['scores'][username]})
+    # Progress to next question
+    room['progress'][username] += 1
+    next_question = None
+    if room['progress'][username] < len(question_list):
+        next_question = question_list[room['progress'][username]]
+
+    return jsonify({
+        'result': 'received',
+        'response_length': response_length,
+        'new_score': room['scores'][username],
+        'next_question': next_question,
+        'completed': next_question is None
+    }), 200
+
 
 @socketio.on('join')
 def handle_join(data):
@@ -120,17 +138,35 @@ def handle_join(data):
 
     if room_id in rooms:
         join_room(room_id)
+        room = rooms[room_id]
+
+        # Initialize user progress and scores if not already
+        room.setdefault('progress', {})
+        room.setdefault('scores', {})
+        room['progress'].setdefault(username, 0)
+        room['scores'].setdefault(username, 0)
+
         send(f'{username} has entered the room.', to=room_id)
+
+        # Send the first question to the user privately
+        questions = room_questions[room_id]
+        question_list = list(questions.keys())
+        if question_list:
+            first_question = question_list[0]
+            print(first_question)
+            emit('new_question', {'question': first_question}, to=request.sid)
+        else:
+            emit('new_question', {'question': 'No questions found in this room.'}, to=request.sid)
     else:
         emit('error', {'message': 'Room not found.'})
+
 
 @socketio.on('message')
 def handle_message(data):
     room_id = data.get('room')
     message = data.get('message')
-    username = session.get('username')
+    username = data.get('username')
     length = len(message)
-
     if room_id in rooms:
         room = rooms[room_id]
         room['messages'].append(message)
