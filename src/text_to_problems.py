@@ -14,7 +14,7 @@ def text_to_problems(text: str) -> dict[str, str]:
     model = GenerativeModel("gemini-2.0-flash-001")
     prompt = ("""Turn this transcript below surrounded by {} into only a JSON dictionary with no other words, 
         containing pairs with a question and a one or two word answer to that problem in the format of {question1: answer1, question1: answer1} 
-        with the questions and answers being strings, please provide at least 4 (but as many as you can, the more the better) 
+        with the questions and answers being strings, please provide at least 10 (but as many as you can, the more the better) 
         of these question:answer pairs. Make sure the questions are answerable with one or two words, and are not too long."""
         + "{"
         + text
