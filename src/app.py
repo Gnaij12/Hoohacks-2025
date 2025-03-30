@@ -6,8 +6,10 @@ from flask_socketio import SocketIO, join_room, leave_room, send, emit
 import fleep
 from speech_to_text import audio_to_text
 from text_to_keywords import text_to_keywords
+from text_to_problems import text_to_problems
 import uuid
 import logging
+import json
 
 
 template_dir = os.path.abspath("./templates")
@@ -17,6 +19,9 @@ serializer = URLSafeTimedSerializer(app.secret_key)
 socketio = SocketIO(app)
 rooms = {}
 room_keywords = {}
+room_questions = {}
+temp_keywords = {}
+temp_questions = {}
 
 @app.route("/", methods=["GET"])
 def main_page() -> str:
@@ -28,6 +33,8 @@ def create_room():
     room_name = request.form.get('room_name')
     room_id = str(uuid.uuid4())
     rooms[room_id] = {'name': room_name, 'messages': []}
+    room_keywords[room_id] = temp_keywords
+    room_questions[room_id] = temp_questions
     token = serializer.dumps(room_id, salt='room-access')
     room_url = url_for('join_room_page', token=token, _external=True)
     return f'Room "{room_name}" created successfully! Share this link: <a href="{room_url}">{room_url}</a>'
@@ -179,12 +186,15 @@ def parse_text() -> str:
                 text = file2.read()
 
     keyword_pairs = text_to_keywords(text)
-    room_keywords[2] = keyword_pairs
+    question_answer_pairs = text_to_problems(text)
+    temp_keywords = keyword_pairs
+    temp_questions = question_answer_pairs
     return keyword_pairs
 
-@app.route("/keyword_definition")
+@app.route("/keyword_definition", methods=["POST"])
 def keyword_definition():
-    return render_template("keyword_definition.html")
+    data = request.get_json()
+    return render_template("keyword_definition.html", data=json.dumps(data))
 
 if __name__ == '__main__':
     socketio.run(app, debug=True)

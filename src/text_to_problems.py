@@ -8,14 +8,14 @@ import re
 
 load_dotenv(dotenv_path=".env")
 
-def text_to_keywords(text: str) -> dict[str, str]:
+def text_to_problems(text: str) -> dict[str, str]:
     PROJECT_ID = os.getenv("PROJECT_ID")
     vertexai.init(project=PROJECT_ID, location="us-central1")
     model = GenerativeModel("gemini-2.0-flash-001")
     prompt = ("""Turn this transcript below surrounded by {} into only a JSON dictionary with no other words, 
-        containing pairs with the keyword and the definition of that keyword in the format of {term1: definition1, term2: definition2} 
-        with the terms and definitions being strings, please provide at least 4 (but as many as you can, the more the better) 
-        of these term:definition pairs"""
+        containing pairs with a question and a one or two word answer to that problem in the format of {question1: answer1, question1: answer1} 
+        with the questions and answers being strings, please provide at least 4 (but as many as you can, the more the better) 
+        of these question:answer pairs. Make sure the questions are answerable with one or two words, and are not too long."""
         + "{"
         + text
         + "}"
@@ -50,5 +50,5 @@ if __name__ == "__main__":
     path = "Quantum Mechanics Explained in Ridiculously Simple Words.wav"
     # path = "gs://cloud-samples-data/generative-ai/audio/pixel.mp3"
     text = audio_to_text(path)
-    keyword_def = text_to_keywords(text)
-    print(keyword_def)
+    question_answer = text_to_problems(text)
+    print(question_answer)

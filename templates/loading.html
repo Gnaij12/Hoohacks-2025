@@ -1,0 +1,84 @@
+
+<div class="h-[94vh] flex-col bg-theme-prussian bg-cover bg-center">
+    <div
+        class="bg-theme-ar tic grid-flow-* container mx-auto flex h-3/4 w-2/5 flex-col items-center justify-center rounded-3xl border-0 border-theme-bronze bg-opacity-0">
+        <div
+            class="flex  h-1/6 w-full flex-col items-center justify-center rounded-2xl bg-opacity-0">
+            <div
+                class="relative flex h-1/2 w-full items-center justify-center overflow-hidden rounded-sm border-4 border-theme-bronze border-opacity-100 bg-opacity-0">
+                <div
+                    class="top-0 my-auto ml-0 h-1/2 w-0 rounded-sm bg-theme-bronze"
+                    id="loading_bar"></div>
+            </div>
+            <p
+                class="mt-4 font-custom text-4xl text-theme-bronze"
+                id="loading">
+                Loading Text.
+            </p>
+        </div>
+    </div>
+</div>
+<div class="h-[6vh] w-full bg-theme-bronze"></div>
+
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script>
+    var text = ["Loading Text.", "Loading Text..", "Loading Text..."];
+    var counter = 0;
+    var elem = document.getElementById("loading");
+    var inst = setInterval(change, 1000);
+
+    function change() {
+        counter = (counter + 1) % text.length;
+        elem.innerHTML = text[counter];
+    }
+    var bar = document.getElementById("loading_bar");
+    var width = 1.0;
+    var id = setInterval(frame, 10);
+    var inc = Math.random() * (0.1 - 0.01) + 0.01;
+    function frame() {
+        if (width >= 100) {
+            clearInterval(id);
+        } else {
+            if ((width | 0) % 20 == 0) {
+                inc = Math.random() * (0.05 - 0.01) + 0.01;
+                width += 1;
+            } else if ((width | 0) == 50) {
+                text = [
+                    "Extracting Keywords.",
+                    "Extracting Keywords..",
+                    "Extracting Keywords...",
+                ];
+            } else if ((width | 0) == 85) inc = 0.01;
+            else if ((width | 0) == 92) inc = 0.001;
+            width += inc;
+            bar.style.width = width + "%";
+        }
+    }
+
+    fetch("/parse_text")
+        .then((v) => v.json())
+        .then((j) => {
+            let quick_int = setInterval((_) => {
+                width += 1;
+                if (width > 100) {
+                    clearInterval(quick_int);
+
+                    // Send a POST request to /keyword_definition
+                    fetch("/keyword_definition", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify(j), // Send the data as JSON
+                    })
+                        .then((response) => response.text())
+                        .then((html) => {
+                            // Replace the current page with the response HTML
+                            document.open();
+                            document.write(html);
+                            document.close();
+                        });
+                }
+            }, 10);
+        });
+</script>
