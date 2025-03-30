@@ -16,7 +16,7 @@ app.secret_key = "oiufhvgi9ychfvguo9gvjhboiuhvgjbknpi0uvgjhbo0uygvhiu9yvghbu08gv
 serializer = URLSafeTimedSerializer(app.secret_key)
 socketio = SocketIO(app)
 rooms = {}
-room_pair = {}
+room_keywords = {}
 
 @app.route("/", methods=["GET"])
 def main_page() -> str:
@@ -179,11 +179,11 @@ def parse_text() -> str:
                 text = file2.read()
 
     keyword_pairs = text_to_keywords(text)
-    room_pair[2] = keyword_pairs
+    room_keywords[2] = keyword_pairs
     return keyword_pairs
 
 @app.route("/keyword_definition")
-def keyword_definition() -> str:
+def keyword_definition():
     return render_template("keyword_definition.html")
 
 if __name__ == '__main__':
