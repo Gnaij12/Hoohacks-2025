@@ -61,7 +61,6 @@ def join_room_page(token):
 
 @app.route('/calculate', methods=['POST'])
 def calculate_length():
-    print("Received calculate request")
     if not request.is_json:
         return jsonify({'error': 'Request must be JSON'}), 400
 
@@ -90,16 +89,19 @@ def calculate_length():
 
     progress = room['progress'][username]
     question_list = list(questions.keys())
+    answer_list = list(questions.values())
 
     if progress >= len(question_list):
         return jsonify({'message': 'You have completed all questions!'}), 200
 
     # Score based on length
-    response_length = len(message)
-    room['scores'][username] += response_length
+    doc1 = nlp(answer_list[progress])
+    doc2 = nlp(message)
+    similarity_score = pow(doc1.similarity(doc2),3)*10
+    room['scores'][username] += similarity_score
 
     # Check for win (score threshold)
-    if room['scores'][username] >= 50:
+    if room['scores'][username] >= 100:
         socketio.emit('game_over', {'message': f'{username} has won the game!'}, room=room_id)
         del rooms[room_id]  # optional: clean up room
         return jsonify({'message': f'{username} has won the game!'}), 200
@@ -112,7 +114,7 @@ def calculate_length():
 
     return jsonify({
         'result': 'received',
-        'response_length': response_length,
+        'response_length': len(message),
         'new_score': room['scores'][username],
         'next_question': next_question,
         'completed': next_question is None
@@ -151,6 +153,7 @@ def handle_join(data):
         # Send the first question to the user privately
         questions = room_questions[room_id]
         question_list = list(questions.keys())
+        
         if question_list:
             first_question = question_list[0]
             print(first_question)
