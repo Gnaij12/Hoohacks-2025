@@ -41,7 +41,11 @@
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({'message': message})
+                    body: JSON.stringify({
+                        'message': message,
+                        'room_id': room,
+                        'username': username
+                    })
                 })
                 .then(response => response.json())
                 .then(data => {

@@ -4,6 +4,9 @@ from flask_session import Session
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from flask_socketio import SocketIO, join_room, leave_room, send, emit
 import uuid
+import logging
+
+
 template_dir = os.path.abspath("./templates")
 app = Flask(__name__, template_folder="../templates/", static_folder="../static/")
 app.secret_key = "oiufhvgi9ychfvguo9gvjhboiuhvgjbknpi0uvgjhbo0uygvhiu9yvghbu08gv"
@@ -44,29 +47,44 @@ def join_room_page(token):
 
 @app.route('/calculate', methods=['POST'])
 def calculate_length():
-    data = request.get_json()
+    print("Received calculate request")
+
+    # Check content type
+    if not request.is_json:
+        return jsonify({'error': 'Request must be JSON'}), 400
+
+    data = request.get_json(silent=True)
+
+    if not data:
+        return jsonify({'error': 'Invalid JSON'}), 400
+
     message = data.get('message', '')
-    room_id = session.get('room_id')
-    username = session.get('username')
+    room_id = data.get('room_id')
+    username = data.get('username')
+
+    print(f"message: {message}, room_id: {room_id}, username: {username}")
 
     if not room_id or not username:
-        return jsonify({'error': 'User session data missing'}), 400
+        return jsonify({'error': 'room_id or username missing'}), 400
 
     room = rooms.get(room_id)
     if not room:
         return jsonify({'error': 'Room not found'}), 404
 
-    # Calculate message length
-    length = len(message)
+    # Make sure 'scores' exists
+    if 'scores' not in room:
+        room['scores'] = {}
 
-    # Update the user's score
+    # Calculate length and update score
+    length = len(message)
     room['scores'][username] = room['scores'].get(username, 0) + length
 
-    # Check if the user has reached the score threshold
+    print(room['scores'][username])
+
+    # Check for winner
     if room['scores'][username] >= 50:
         socketio.emit('game_over', {'message': f'{username} has won the game!'}, room=room_id)
-        # Optionally, reset or remove the room
-        del rooms[room_id]
+        del rooms[room_id]  # Optionally clear room
         return jsonify({'message': f'{username} has won the game!'}), 200
 
     return jsonify({'length': length, 'new_score': room['scores'][username]})
@@ -98,8 +116,8 @@ def handle_join(data):
 def handle_message(data):
     room_id = data.get('room')
     message = data.get('message')
-    length = data.get('length')
     username = session.get('username')
+    length = len(message)
 
     if room_id in rooms:
         room = rooms[room_id]
@@ -107,7 +125,7 @@ def handle_message(data):
         send(f'{username}: {message}', to=room_id)
 
         # Update the user's score
-        if username not in room['scores']:
+        if username not in room['scores'] or isinstance(room['scores'][username],int):
             room['scores'][username] = 0
         room['scores'][username] += length
 
