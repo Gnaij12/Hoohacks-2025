@@ -8,7 +8,6 @@ load_dotenv(dotenv_path=".env")
 def audio_to_text(path: str) -> str:
 
     PROJECT_ID = os.getenv("PROJECT_ID")
-    print(PROJECT_ID)
     vertexai.init(project=PROJECT_ID, location="us-central1")
 
     model = GenerativeModel("gemini-1.5-flash-002")

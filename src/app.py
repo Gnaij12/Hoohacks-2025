@@ -3,6 +3,9 @@ from flask import Flask, render_template, request, abort, url_for, session, json
 from flask_session import Session
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from flask_socketio import SocketIO, join_room, leave_room, send, emit
+import fleep
+from speech_to_text import audio_to_text
+from text_to_keywords import text_to_keywords
 import uuid
 import logging
 
@@ -144,6 +147,38 @@ def handle_disconnect():
         send(f'{username} has left the room.', to=room_id)
         # Optionally, remove user from any tracking structures here
     print(f'Client {request.sid} disconnected.')
+
+@app.route('/loading', methods=["POST"])
+def login():
+    if request.files["file_input"]:  # File option
+        file = request.files["file_input"]
+        file.save(file.filename)
+        with open("filename.txt", "w+") as txt_file:
+            txt_file.write(file.filename)
+    else:  # Text option
+        user_text = request.form["text_input"]
+        with open("user_text.txt", "w") as txt_file:
+            txt_file.write(user_text)
+        with open("filename.txt", "w") as txt_file:
+            txt_file.write("user_text.txt")
+
+    return render_template("loading.html")
+
+
+@app.route("/parse_text")
+def parse_text() -> str:
+    with open("filename.txt", "r") as txt_file:
+        filename = txt_file.read()
+    with open(filename, "rb") as file:
+        text = ""
+        if "audio" in fleep.get(file.read(128)).type:  # audio file
+            text = audio_to_text(filename)
+        else:
+            with open(filename, "r") as file2:
+                text = file2.read()
+
+    keyword_pairs = text_to_keywords(text)
+    return keyword_pairs
 
 if __name__ == '__main__':
     socketio.run(app, debug=True)

@@ -1,3 +1,4 @@
 *.wav
 .env
 __pycache__
+filename.txt

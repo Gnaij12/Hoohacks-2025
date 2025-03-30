@@ -23,7 +23,7 @@ def text_to_keywords(text: str) -> dict[str, str]:
     response = model.generate_content(
         contents=prompt
     )
-    print(response.text)
+    # print(response.text)
     try:
         # Attempt to parse the response as JSON
         return json.loads(response.text)
