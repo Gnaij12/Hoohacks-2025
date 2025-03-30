@@ -6,17 +6,36 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <title>Chat Room: {{ room_name }}</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <style>
+        .bg-half {
+            background: url(/static/img/campfire_idle.gif) center;
+            background-repeat: no-repeat;
+            object-fit: cover;
+            height: 100vh;
+            width: 50vw;
+        }
+    </style>
 </head>
-<body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen p-6">
-    <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-2xl text-center">
-        <h2 class="text-2xl font-bold text-gray-800 mb-4">Welcome to Room: {{ room_name }}</h2>
-        
-        <div id="chat" class="border border-gray-300 h-64 overflow-y-scroll p-4 mb-4 bg-gray-50 rounded-lg text-left"></div>
-        <div id="question" class="mb-4 font-semibold text-gray-700"></div>
-        
-        <div class="flex space-x-2">
-            <input type="text" id="message" placeholder="Type your answer here..." class="flex-1 border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none">
-            <button id="send_message" class="bg-blue-500 text-white py-2 px-4 rounded-lg cursor-pointer hover:bg-blue-600 transition">Send</button>
+<body class="bg-gray-100 flex flex-row min-h-screen">
+    
+    <div class="bg-half relative flex flex-col justify-end items-center">
+        <img id="marsh_left" src="/static/img/marsh_toast_L.gif" class="absolute left-[350px] bottom-[450px] w-20 h-20 object-contain" />
+        <img id="owl_left" src="/static/img/hooter_idle_L.gif" class="absolute left-[275px] bottom-[425px] w-24 h-24 object-contain" />
+        <img id="marsh_right" src="/static/img/marsh_burn_R.gif" class="absolute right-[350px] bottom-[450px] w-20 h-20 object-contain" />
+        <img id="owl_right" src="/static/img/hooter_idle_R.gif" class="absolute right-[275px] bottom-[425px] w-24 h-24 object-contain" />
+    </div>
+
+    <div class="w-1/2 flex flex-col items-center justify-center p-6">
+        <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-2xl text-center">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Welcome to Room: {{ room_name }}</h2>
+            
+            <div id="chat" class="border border-gray-300 h-64 overflow-y-scroll p-4 mb-4 bg-gray-50 rounded-lg text-left"></div>
+            <div id="question" class="mb-4 font-semibold text-gray-700"></div>
+            
+            <div class="flex space-x-2">
+                <input type="text" id="message" placeholder="Type your answer here..." class="flex-1 border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none">
+                <button id="send_message" class="bg-blue-500 text-white py-2 px-4 rounded-lg cursor-pointer hover:bg-blue-600 transition">Send</button>
+            </div>
         </div>
     </div>
 
@@ -36,6 +55,16 @@
                 chat.appendChild(message);
                 chat.scrollTop = chat.scrollHeight;
             });
+
+            socket.on('user_joined', function(data) {
+                var position = data.position;  // 'left' or 'right'
+                var username = data.username;
+                var owl_image_id = position === 'left' ? 'owl_left' : 'owl_right';
+                var owl_image = document.getElementById(owl_image_id);
+                owl_image.alt = username;  // Update alt attribute to show username on hover
+                alert(username + ' has joined on the ' + position);
+            });
+
 
             socket.on('game_over', function (data) {
                 var chat = document.getElementById('chat');
@@ -72,9 +101,6 @@
                     }
 
                     if (data.result === 'received') {
-                        if(data.score>3.5){
-                            //TODO: Change an owl to a burnt thing
-                        }
                         socket.emit('message', { 'room': room, 'message': message, 'username': username });
                         if (data.completed) {
                             document.getElementById('question').innerText = '✅ All questions complete!';

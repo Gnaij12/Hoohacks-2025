@@ -131,37 +131,26 @@ def handle_join(data):
 
     try:
         room_id = serializer.loads(token, salt='room-access', max_age=1800)
-    except SignatureExpired:
-        emit('error', {'message': 'The link has expired.'})
-        return
-    except BadSignature:
+    except (SignatureExpired, BadSignature):
         emit('error', {'message': 'Invalid access token.'})
         return
 
     if room_id in rooms:
         join_room(room_id)
         room = rooms[room_id]
-
-        # Initialize user progress and scores if not already
-        room.setdefault('progress', {})
-        room.setdefault('scores', {})
-        room['progress'].setdefault(username, 0)
-        room['scores'].setdefault(username, 0)
+        room_users = room.setdefault('users', [])
+        
+        if len(room_users) < 2:  # Only the first two users get positions
+            user_position = 'left' if len(room_users) == 0 else 'right'
+            room_users.append({'username': username, 'position': user_position})
+            emit('user_joined', {'username': username, 'position': user_position}, room=room_id)
+        else:
+            room_users.append({'username': username})
 
         send(f'{username} has entered the room.', to=room_id)
-
-        # Send the first question to the user privately
-        questions = room_questions[room_id]
-        question_list = list(questions.keys())
-        
-        if question_list:
-            first_question = question_list[0]
-            print(first_question)
-            emit('new_question', {'question': first_question}, to=request.sid)
-        else:
-            emit('new_question', {'question': 'No questions found in this room.'}, to=request.sid)
     else:
         emit('error', {'message': 'Room not found.'})
+
 
 
 @socketio.on('message')
