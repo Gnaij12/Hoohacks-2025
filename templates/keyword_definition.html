@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Keyword Definitions</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Keyword Definitions</h1>
+    <table id="keywordTable">
+        <thead>
+            <tr>
+                <th>Keyword</th>
+                <th>Definition</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Rows will be dynamically added here -->
+        </tbody>
+    </table>
+    <button onclick="window.location.href='/create_room'">Create Room</button>
+
+    <script>
+        async function fetchKeywordDefinitions() {
+            try {
+                const response = await fetch('/parse_text');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch keyword definitions');
+                }
+                const data = await response.json();
+                const tableBody = document.querySelector('#keywordTable tbody');
+                tableBody.innerHTML = ''; // Clear existing rows
+
+                for (const [keyword, definition] of Object.entries(data)) {
+                    const row = document.createElement('tr');
+                    const keywordCell = document.createElement('td');
+                    const definitionCell = document.createElement('td');
+
+                    keywordCell.textContent = keyword;
+                    definitionCell.textContent = definition;
+
+                    row.appendChild(keywordCell);
+                    row.appendChild(definitionCell);
+                    tableBody.appendChild(row);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        // Fetch and populate the table on page load
+        window.onload = fetchKeywordDefinitions;
+    </script>
+</body>
+</html>
