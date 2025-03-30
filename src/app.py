@@ -25,7 +25,8 @@ temp_questions = {}
 
 @app.route("/", methods=["GET"])
 def main_page() -> str:
-    return render_template("index.html")
+    return render_template("game_room.html")
+    # return render_template("index.html")
 
 
 @app.route('/create_room', methods=['POST'])

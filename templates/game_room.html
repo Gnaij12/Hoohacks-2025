@@ -1,21 +1,41 @@
-{% extends "base.html" %}
-{% block static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Image Display</title>
     <script src="/static/js/gameplay.js"></script>
-{% endblock %}
-{% block content %}
+    <style>
+        .flex-container {
+            display: flex;
+            width: 100vw;
+            height: 100vh;
+        }
+        .half {
+            width: 50%;
+            height: 100%;
+        }
+        .half img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+    </style>
+</head>
+<body>
     <div id="data_store" data-json="{{ data }}"></div>
-    <div class="flex w-screen h-screen">
-        <!-- Left Half: Image 1 -->
-        <div class="w-1/2 h-full">
+    <div class="flex-container">
+        <div style="width: 50%; height: 100%;">
             <img
-                src="/static/img/1st_image.gif"
+                src="/static/img/campfire_idle.gif"
                 style="width: 100%; height: 100%; object-fit: contain;">
         </div>
-        <!-- Right Half: Image 2 -->
-        <div class="w-1/2 h-full">
+        <div style="width: 50%; height: 100%;">
             <img
-                src="/static/img/2nd_image.gif"
+                src="/static/img/campfire_idle.gif"
                 style="width: 100%; height: 100%; object-fit: contain;">
         </div>
     </div>
-{% endblock %}
+</body>
+</html>
