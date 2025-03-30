@@ -138,8 +138,24 @@ def handle_join(data):
     if room_id in rooms:
         join_room(room_id)
         room = rooms[room_id]
+
+        room.setdefault('progress', {})
+        room.setdefault('scores', {})
+        room['progress'].setdefault(username, 0)
+        room['scores'].setdefault(username, 0)
+
+        send(f'{username} has entered the room.', to=room_id)
+
+        # Send the first question to the user privately
+        questions = room_questions[room_id]
+        question_list = list(questions.keys())
         room_users = room.setdefault('users', [])
         
+        if question_list:
+            first_question = question_list[0]
+            print(first_question)
+            emit('new_question', {'question': first_question}, to=request.sid)
+
         if len(room_users) < 2:  # Only the first two users get positions
             user_position = 'left' if len(room_users) == 0 else 'right'
             room_users.append({'username': username, 'position': user_position})
@@ -148,6 +164,9 @@ def handle_join(data):
             room_users.append({'username': username})
 
         send(f'{username} has entered the room.', to=room_id)
+        questions = room_questions.get(room_id, [])
+        current_question = questions[0] if questions else "No questions yet."
+        emit('new_question', {'question': current_question}, room=room_id)
     else:
         emit('error', {'message': 'Room not found.'})
 
