@@ -1,10 +1,9 @@
 import spacy
 
-# Load the spaCy model once
-nlp = spacy.load("en_core_web_lg")  # Ensure the larger model is installed
+nlp = spacy.load("en_core_web_lg") 
 
 def calculate_similarity(text1: str, text2: str) -> float:
-    """Calculate similarity score between two text strings using spaCy."""
+    """Calculate similarity score between two text strings."""
     doc1 = nlp(text1)
     doc2 = nlp(text2)
     return doc1.similarity(doc2)
