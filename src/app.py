@@ -114,7 +114,7 @@ def calculate_length():
 
     return jsonify({
         'result': 'received',
-        'response_length': len(message),
+        'score': similarity_score,
         'new_score': room['scores'][username],
         'next_question': next_question,
         'completed': next_question is None

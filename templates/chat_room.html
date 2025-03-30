@@ -72,6 +72,9 @@
                     }
 
                     if (data.result === 'received') {
+                        if(data.score>3.5){
+                            //TODO: Change an owl to a burnt thing
+                        }
                         socket.emit('message', { 'room': room, 'message': message, 'username': username });
                         if (data.completed) {
                             document.getElementById('question').innerText = '✅ All questions complete!';
