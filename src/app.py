@@ -187,6 +187,8 @@ def parse_text() -> str:
 
     keyword_pairs = text_to_keywords(text)
     question_answer_pairs = text_to_problems(text)
+    global temp_keywords
+    global temp_questions
     temp_keywords = keyword_pairs
     temp_questions = question_answer_pairs
     return keyword_pairs
