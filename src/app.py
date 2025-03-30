@@ -40,7 +40,7 @@ def create_room():
     room_questions[room_id] = temp_questions
     token = serializer.dumps(room_id, salt='room-access')
     room_url = url_for('join_room_page', token=token, _external=True)
-    return f'Room "{room_name}" created successfully! Share this link: <a href="{room_url}">{room_url}</a>'
+    return render_template("create_room.html", data={"room_name": room_name, "room_url": room_url})
 
 @app.route('/join_room/<token>')
 def join_room_page(token):

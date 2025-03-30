@@ -1,10 +1,29 @@
-<!doctype html>
-<html>
-    <body>
-        <h2>Create a New Room</h2>
-        <form method="post">
-            Room Name: <input type="text" name="room_name" required>
-            <input type="submit" value="Create Room">
-        </form>
-    </body>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Room Created</title>
+</head>
+<body class="bg-gray-100 flex items-center justify-center h-screen">
+    <div class="bg-white p-6 rounded-lg shadow-lg w-96 text-center">
+        <h2 class="text-xl font-bold text-gray-800 mb-4">Room Created Successfully</h2>
+        <p class="text-gray-600 mb-4">Room Name: <span class="font-semibold">{{ data.room_name }}</span></p>
+        <a href="{{ data.room_url }}" class="bg-blue-500 text-white py-2 px-4 rounded-lg cursor-pointer hover:bg-blue-600 transition inline-block">Join Room</a>
+        <button onclick="copyToClipboard()" class="mt-4 bg-gray-500 text-white py-2 px-4 rounded-lg cursor-pointer hover:bg-gray-600 transition">Copy Link</button>
+        <p id="copyMessage" class="text-green-500 mt-2 hidden">Link copied!</p>
+    </div>
+
+    <script>
+        function copyToClipboard() {
+            const link = "{{ data.room_url }}";
+            navigator.clipboard.writeText(link).then(() => {
+                const message = document.getElementById("copyMessage");
+                message.classList.remove("hidden");
+                setTimeout(() => message.classList.add("hidden"), 2000);
+            });
+        }
+    </script>
+</body>
 </html>

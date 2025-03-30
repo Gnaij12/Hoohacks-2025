@@ -1,27 +1,42 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
     <title>Chat Room: {{ room_name }}</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
-    <script type="text/javascript">
+</head>
+<body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen p-6">
+    <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-2xl text-center">
+        <h2 class="text-2xl font-bold text-gray-800 mb-4">Welcome to Room: {{ room_name }}</h2>
+        
+        <div id="chat" class="border border-gray-300 h-64 overflow-y-scroll p-4 mb-4 bg-gray-50 rounded-lg text-left"></div>
+        <div id="question" class="mb-4 font-semibold text-gray-700"></div>
+        
+        <div class="flex space-x-2">
+            <input type="text" id="message" placeholder="Type your answer here..." class="flex-1 border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none">
+            <button id="send_message" class="bg-blue-500 text-white py-2 px-4 rounded-lg cursor-pointer hover:bg-blue-600 transition">Send</button>
+        </div>
+    </div>
+
+    <script>
         document.addEventListener('DOMContentLoaded', function () {
             var socket = io.connect('http://' + document.domain + ':' + location.port);
             var room = "{{ room_id }}";
             var token = "{{ token }}";
             var username = prompt("Enter your username");
 
-            // Send join request
             socket.emit('join', { 'username': username, 'room': room, 'token': token });
 
-            // Listen for chat messages
             socket.on('message', function (msg) {
                 var chat = document.getElementById('chat');
                 var message = document.createElement('p');
                 message.innerHTML = msg;
                 chat.appendChild(message);
+                chat.scrollTop = chat.scrollHeight;
             });
 
-            // Listen for game over
             socket.on('game_over', function (data) {
                 var chat = document.getElementById('chat');
                 var message = document.createElement('p');
@@ -31,33 +46,23 @@
                 document.getElementById('send_message').disabled = true;
             });
 
-            // Listen for errors
             socket.on('error', function (data) {
                 alert(data.message);
             });
 
-            // Listen for new question just for this user
             socket.on('new_question', function (data) {
-                var qDiv = document.getElementById('question');
-                qDiv.innerText = data.question || 'No more questions.';
+                document.getElementById('question').innerText = data.question || 'No more questions.';
             });
 
-            // Handle message send
-            document.getElementById('send_message').onclick = function () {
+            function sendMessage() {
                 var messageInput = document.getElementById('message');
                 var message = messageInput.value.trim();
                 if (!message) return;
 
                 fetch('/calculate', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        'message': message,
-                        'room_id': room,
-                        'username': username
-                    })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 'message': message, 'room_id': room, 'username': username })
                 })
                 .then(response => response.json())
                 .then(data => {
@@ -66,14 +71,8 @@
                         return;
                     }
 
-                    // Show feedback
                     if (data.result === 'received') {
-                        socket.emit('message', {
-                            'room': room,
-                            'message': message,
-                            'username': username
-                        });
-
+                        socket.emit('message', { 'room': room, 'message': message, 'username': username });
                         if (data.completed) {
                             document.getElementById('question').innerText = '✅ All questions complete!';
                             document.getElementById('message').disabled = true;
@@ -85,23 +84,22 @@
 
                     messageInput.value = '';
                 })
-                .catch(error => {
-                    console.error('Error:', error);
-                });
-            };
+                .catch(error => { console.error('Error:', error); });
+            }
 
-            // Notify server when the page is closed
+            document.getElementById('send_message').onclick = sendMessage;
+
+            document.getElementById('message').addEventListener('keypress', function(event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    sendMessage();
+                }
+            });
+
             window.addEventListener('beforeunload', function () {
                 socket.emit('leave', { 'username': username, 'room': room });
             });
         });
     </script>
-</head>
-<body>
-    <h2>Welcome to Room: {{ room_name }}</h2>
-    <div id="chat" style="border:1px solid #ccc; height:300px; overflow-y:scroll; padding:10px;"></div>
-    <div id="question" style="margin: 10px 0; font-weight: bold;"></div>
-    <input type="text" id="message" placeholder="Type your answer here..." style="width:80%;">
-    <button id="send_message">Send</button>
 </body>
 </html>

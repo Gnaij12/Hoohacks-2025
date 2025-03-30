@@ -3,66 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
     <title>Keyword Definitions</title>
-    <style>
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-        th {
-            background-color: #f2f2f2;
-        }
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-    </style>
 </head>
-<body>
-    <h1>Keyword Definitions</h1>
-    <table id="keywordTable">
-        <thead>
-            <tr>
-                <th>Keyword</th>
-                <th>Definition</th>
-            </tr>
-        </thead>
-        <tbody>
-            <!-- Rows will be dynamically added here -->
-        </tbody>
-    </table>
-    <form action="{{ url_for('create_room') }}" method="post">
-        Room Name: <input type="text" name="room_name" required>
-        <input type="submit" value="Create Room">
-    </form>
+<body class="bg-gray-100 p-6">
+    <div class="max-w-4xl mx-auto bg-white shadow-lg rounded-lg p-6">
+        <h1 class="text-2xl font-bold text-gray-800 mb-4 text-center">Keyword Definitions</h1>
+        
+        <div class="overflow-x-auto">
+            <table class="w-full border border-gray-300 rounded-lg">
+                <thead>
+                    <tr class="bg-gray-200 text-gray-700">
+                        <th class="px-4 py-2 border">Keyword</th>
+                        <th class="px-4 py-2 border">Definition</th>
+                    </tr>
+                </thead>
+                <tbody id="keywordTable" class="bg-white">
+                    <!-- Rows will be dynamically added here -->
+                </tbody>
+            </table>
+        </div>
+        
+        <form action="{{ url_for('create_room') }}" method="post" class="mt-6 flex flex-col space-y-4">
+            <label class="text-gray-700 font-medium">Room Name:</label>
+            <input type="text" name="room_name" required class="border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none">
+            <input type="submit" value="Create Room" class="bg-blue-500 text-white py-2 px-4 rounded-lg cursor-pointer hover:bg-blue-600 transition">
+        </form>
+    </div>
 
     <script>
         let rawData = `{{ data|safe }}`;
-        // rawData = rawData.replace(/'/g, "\\'");
-        // console.log(rawData);
-
-        // Parse the data passed from the server
         const data = JSON.parse(rawData);
-
-        // Populate the table with the data
-        const tableBody = document.querySelector('#keywordTable tbody');
-        tableBody.innerHTML = ''; // Clear existing rows
+        const tableBody = document.querySelector('#keywordTable');
+        tableBody.innerHTML = '';
 
         for (const [keyword, definition] of Object.entries(data)) {
             const row = document.createElement('tr');
+            row.className = "border-b hover:bg-gray-100";
+            
             const keywordCell = document.createElement('td');
             const definitionCell = document.createElement('td');
-
+            
             keywordCell.textContent = keyword;
             definitionCell.textContent = definition;
-
+            
+            keywordCell.className = "px-4 py-2 border";
+            definitionCell.className = "px-4 py-2 border";
+            
             row.appendChild(keywordCell);
             row.appendChild(definitionCell);
             tableBody.appendChild(row);
