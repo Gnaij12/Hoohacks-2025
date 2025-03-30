@@ -163,7 +163,7 @@ def handle_join(data):
         else:
             room_users.append({'username': username})
 
-        send(f'{username} has entered the room.', to=room_id)
+        # send(f'{username} has entered the room.', to=room_id)
         questions = room_questions.get(room_id, [])
         current_question = questions[0] if questions else "No questions yet."
         emit('new_question', {'question': current_question}, room=room_id)
