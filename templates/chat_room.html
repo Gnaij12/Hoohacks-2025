@@ -36,25 +36,43 @@
                 var messageInput = document.getElementById('message');
                 var message = messageInput.value;
 
-                // Send the message to the /calculate route
                 fetch('/calculate', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({'input_string': message})
+                    body: JSON.stringify({'message': message})
                 })
                 .then(response => response.json())
                 .then(data => {
-                    var length = data.length;
-                    // Emit the message and its length to the server
-                    socket.emit('message', {'room': room, 'message': message, 'length': length});
+                    if (data.error) {
+                        console.error('Error:', data.error);
+                        return;
+                    }
+                    if (data.message) {
+                        // Game over message received
+                        alert(data.message);
+                        // Optionally, disable input fields
+                        document.getElementById('message').disabled = true;
+                        document.getElementById('send_message').disabled = true;
+                    } else {
+                        // Update UI with new score or message length if needed
+                        console.log('Message length:', data.length, 'New score:', data.new_score);
+                        socket.emit('message', {'room': room, 'message': username + ': ' + message});
+                    }
                     messageInput.value = '';
                 })
                 .catch(error => {
                     console.error('Error:', error);
                 });
             };
+
+            socket.on('game_over', function(data) {
+                alert(data.message);
+                // Optionally, disable input fields
+                document.getElementById('message').disabled = true;
+                document.getElementById('send_message').disabled = true;
+            });
 
             window.addEventListener('beforeunload', function() {
                 socket.emit('leave', {'username': username, 'room': room});

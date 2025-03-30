@@ -8,7 +8,7 @@ load_dotenv(dotenv_path=".env")
 def audio_to_text(path: str) -> str:
 
     PROJECT_ID = os.getenv("PROJECT_ID")
-
+    print(PROJECT_ID)
     vertexai.init(project=PROJECT_ID, location="us-central1")
 
     model = GenerativeModel("gemini-1.5-flash-002")
@@ -34,7 +34,7 @@ def audio_to_text(path: str) -> str:
 
 if __name__ == "__main__":
     # Example usage
-    path = "Brian Cox explains quantum mechanics in 60 seconds - BBC News.wav"
+    # path = "Brian Cox explains quantum mechanics in 60 seconds - BBC News.wav"
     path = "Quantum Mechanics Explained in Ridiculously Simple Words.wav"
     # path = "gs://cloud-samples-data/generative-ai/audio/pixel.mp3"
     transcription = audio_to_text(path)

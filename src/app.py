@@ -36,6 +36,8 @@ def join_room_page(token):
 
     room = rooms.get(room_id)
     if room:
+        session['room_id'] = room_id
+        session['username'] = request.args.get('username')
         return render_template('chat_room.html', room_name=room['name'], room_id=room_id, token=token)
     else:
         abort(404, description='Room not found.')
@@ -43,9 +45,31 @@ def join_room_page(token):
 @app.route('/calculate', methods=['POST'])
 def calculate_length():
     data = request.get_json()
-    input_string = data.get('input_string', '')
-    length = len(input_string)
-    return jsonify({'length': length})
+    message = data.get('message', '')
+    room_id = session.get('room_id')
+    username = session.get('username')
+
+    if not room_id or not username:
+        return jsonify({'error': 'User session data missing'}), 400
+
+    room = rooms.get(room_id)
+    if not room:
+        return jsonify({'error': 'Room not found'}), 404
+
+    # Calculate message length
+    length = len(message)
+
+    # Update the user's score
+    room['scores'][username] = room['scores'].get(username, 0) + length
+
+    # Check if the user has reached the score threshold
+    if room['scores'][username] >= 50:
+        socketio.emit('game_over', {'message': f'{username} has won the game!'}, room=room_id)
+        # Optionally, reset or remove the room
+        del rooms[room_id]
+        return jsonify({'message': f'{username} has won the game!'}), 200
+
+    return jsonify({'length': length, 'new_score': room['scores'][username]})
 
 @socketio.on('join')
 def handle_join(data):
